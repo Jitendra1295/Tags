@@ -3,25 +3,18 @@ import { makeStyles } from '@material-ui/core/styles';
 import Popover from '@material-ui/core/Popover';
 import Typography from '@material-ui/core/Typography';
 import { IconButton, Button } from '@material-ui/core';
+
+import AddTags from './Add_Tags';
+
 import AddIcon from '@material-ui/icons/Add';
 import EditIcon from '@material-ui/icons/Edit';
 import DeleteIcon from '@material-ui/icons/Delete';
 import CloseIcon from '@material-ui/icons/Close';
 import DoneAllIcon from '@material-ui/icons/DoneAll';
-// import ErrorIcon from '@material-ui/icons/Error';
+
 const iconData = [
-    { label: 'Label 1', icons: [<EditIcon />, <DeleteIcon />], color: '#F44336' },
-    { label: 'Label 2', icons: [<EditIcon />, <DeleteIcon />], color: '#2196F3' },
-    { label: 'Label 1', icons: [<EditIcon />, <DeleteIcon />], color: '#F44336' },
-    { label: 'Label 2', icons: [<EditIcon />, <DeleteIcon />], color: '#2196F3' },
-    { label: 'Label 1', icons: [<EditIcon />, <DeleteIcon />], color: '#F44336' },
-    { label: 'Label 2', icons: [<EditIcon />, <DeleteIcon />], color: '#2196F3' },
-    { label: 'Label 1', icons: [<EditIcon />, <DeleteIcon />], color: '#F44336' },
-    { label: 'Label 2', icons: [<EditIcon />, <DeleteIcon />], color: '#2196F3' },
-    { label: 'Label 1', icons: [<EditIcon />, <DeleteIcon />], color: '#F44336' },
-    { label: 'Label 2', icons: [<EditIcon />, <DeleteIcon />], color: '#2196F3' },
-    { label: 'Label 1', icons: [<EditIcon />, <DeleteIcon />], color: '#F44336' },
-    { label: 'Label 2', icons: [<EditIcon />, <DeleteIcon />], color: '#2196F3' },
+    { label: 'Tag 1', color: '#F44336' },
+    { label: 'Tag 2', color: '#2196F3' },
 ];
 
 const useStyles = makeStyles((theme) => ({
@@ -89,6 +82,12 @@ const useStyles = makeStyles((theme) => ({
 export default function TagPopover() {
     const classes = useStyles();
     const [anchorEl, setAnchorEl] = React.useState(null);
+    const [addTags, setAddTags] = React.useState(false);
+    const [Tags, setTags] = React.useState([...iconData]);
+    const [newTagName, setNewTagName] = React.useState("")
+    const [newTagColor, setNewTagColor] = React.useState("")
+    const [editTagIndex, setEditTagIndex] = React.useState()
+
 
     const handleClick = (event) => {
         setAnchorEl(event.currentTarget);
@@ -97,6 +96,71 @@ export default function TagPopover() {
     const handleClose = () => {
         setAnchorEl(null);
     };
+
+    const handleAdd = () => {
+        setAddTags(true)
+    }
+
+    const onHandleInputChange = (e) => {
+        console.log("onHandleInputChange", e.target.value);
+        setNewTagName(e.target.value)
+    }
+
+    const handleChangeColor = (color) => {
+        setNewTagColor(color.hex);
+        console.log("handleChangeColor", color);
+    }
+
+    const handleTagClose = () => {
+        setAddTags(false)
+    }
+    const handleTagSave = () => {
+        console.log("handleTagSave:", newTagName, newTagColor);
+
+        if (newTagName && newTagColor) {
+            const indexToEdit = Tags.findIndex((tag, key) => key === editTagIndex);
+
+            if (indexToEdit !== -1) {
+                const updatedTags = [...Tags];
+                updatedTags[indexToEdit].label = newTagName;
+                updatedTags[indexToEdit].color = newTagColor;
+                setTags(updatedTags);
+                setNewTagName('');
+                setNewTagColor('');
+                setAddTags(false)
+            } else {
+                const newTag = { label: newTagName, color: newTagColor };
+                setTags((prevTags) => [...prevTags, newTag]);
+                // Clear input values after saving
+                setNewTagName('');
+                setNewTagColor('');
+                setAddTags(false)
+            }
+        }
+    }
+    const handleTagDelete = (index) => {
+        console.log("handleTagDelete:", index);
+        const updatedTags = [...Tags];
+        updatedTags.splice(index, 1);
+        setTags(updatedTags);
+    }
+    const handleTagEdit = (index) => {
+        const tagToEdit = Tags.find((tag, key) => key === index);
+        console.log("handleTagEdit:", index, tagToEdit);
+        setEditTagIndex(index)
+        setNewTagName(tagToEdit.label);
+        setNewTagColor(tagToEdit.color);
+        setAddTags(true)
+
+
+    }
+    const tagActions = [
+        <React.Fragment>
+            <Button color="secondary" variant="text" onClick={handleTagClose} >Cancel</Button>
+            {' '}
+            <Button color="primary" variant="outlined" onClick={handleTagSave} >Save</Button>
+        </React.Fragment>
+    ]
 
     const open = Boolean(anchorEl);
     const id = open ? 'simple-popover' : undefined;
@@ -135,7 +199,7 @@ export default function TagPopover() {
                             <IconButton style={{ color: 'white' }}>
                                 <DoneAllIcon />
                             </IconButton>
-                            <IconButton style={{ color: 'white' }}>
+                            <IconButton style={{ color: 'white' }} onClick={handleAdd}>
                                 <AddIcon />
                             </IconButton>
                             <IconButton style={{ color: 'white' }} onClick={handleClose}>
@@ -144,7 +208,7 @@ export default function TagPopover() {
                         </div>
                     </div>
                     <div className={classes.listData}>
-                        {iconData.map((item, index) => (
+                        {Tags.map((item, index) => (
                             <div key={index} className={classes.listItem}>
                                 <div
                                     className={classes.listItemLabel}
@@ -153,11 +217,12 @@ export default function TagPopover() {
                                     {item.label}
                                 </div>
                                 <div className={classes.listItemIcons}>
-                                    {item.icons.map((Icon, iconIndex) => (
-                                        <IconButton key={iconIndex}>
-                                            {Icon}
-                                        </IconButton>
-                                    ))}
+                                    <IconButton>
+                                        <EditIcon onClick={() => { handleTagEdit(index) }} />
+                                    </IconButton>
+                                    <IconButton onClick={() => { handleTagDelete(index) }}>
+                                        <DeleteIcon />
+                                    </IconButton>
                                 </div>
                             </div>
                         ))}
@@ -173,6 +238,8 @@ export default function TagPopover() {
                     </div>
                 </div>
             </Popover>
+            <AddTags tagOpen={addTags} onHandleInputChange={onHandleInputChange} handleChangeColor={handleChangeColor} handleTagClose={handleTagClose} tagName={newTagName} tagColor={newTagName} tagActions={tagActions} />
+
         </div>
     );
 }
