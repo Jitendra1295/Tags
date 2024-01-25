@@ -11,6 +11,8 @@ import EditIcon from '@material-ui/icons/Edit';
 import DeleteIcon from '@material-ui/icons/Delete';
 import CloseIcon from '@material-ui/icons/Close';
 import DoneAllIcon from '@material-ui/icons/DoneAll';
+import CheckIcon from '@material-ui/icons/Check';
+import ListIcon from '@material-ui/icons/List';
 
 const iconData = [
     { label: 'Tag 1', color: '#F44336' },
@@ -58,10 +60,36 @@ const useStyles = makeStyles((theme) => ({
         padding: theme.spacing(1, 0),
         borderBottom: `1px solid ${theme.palette.grey[300]}`,
     },
+    useListItem: {
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        margin: theme.spacing(1, 0),
+        padding: theme.spacing(1, 0)
+    },
+    useItemLabel: {
+        marginRight: theme.spacing(2),
+        fontSize: '1rem',
+        width: "100%",
+        flexDirection: "row",
+        height: "35px",
+        display: 'flex',
+        alignSelf: 'left',
+        justifyContent: 'center',
+        background: theme.palette.primary.main, // Set the background color
+        padding: theme.spacing(1), // Add padding for better visual appearance
+        borderRadius: theme.shape.borderRadius, // Optionally add border-radius
+        color: theme.palette.common.white, //
+    },
     listItemLabel: {
         marginRight: theme.spacing(2),
         fontSize: '1rem',
         width: "250px",
+        height: "35px",
+        flexDirection: "column",
+        display: 'flex',
+        alignSelf: 'left',
+        justifyContent: 'center',
         background: theme.palette.primary.main, // Set the background color
         padding: theme.spacing(1), // Add padding for better visual appearance
         borderRadius: theme.shape.borderRadius, // Optionally add border-radius
@@ -76,6 +104,10 @@ const useStyles = makeStyles((theme) => ({
         display: "flex",
         justifyContent: "flex-end",
         marginRight: "25px"
+    },
+    rowContainer: {
+        display: "flex",
+        flexDirection: "row",
     }
 }));
 
@@ -87,8 +119,14 @@ export default function TagPopover() {
     const [newTagName, setNewTagName] = React.useState("")
     const [newTagColor, setNewTagColor] = React.useState("")
     const [editTagIndex, setEditTagIndex] = React.useState()
+    const [selectedTags, setSelectedTags] = React.useState(false);
+    const [useTags, setUseTags] = React.useState([]);
 
-
+    const handleUseTag = () => {
+        const selectedTagList = Tags.filter((tag) => tag.selected === true);
+        setUseTags(selectedTagList);
+        setAnchorEl(null);
+    }
     const handleClick = (event) => {
         setAnchorEl(event.currentTarget);
     };
@@ -128,6 +166,7 @@ export default function TagPopover() {
                 setNewTagName('');
                 setNewTagColor('');
                 setAddTags(false)
+                setEditTagIndex()
             } else {
                 const newTag = { label: newTagName, color: newTagColor };
                 setTags((prevTags) => [...prevTags, newTag]);
@@ -151,9 +190,31 @@ export default function TagPopover() {
         setNewTagName(tagToEdit.label);
         setNewTagColor(tagToEdit.color);
         setAddTags(true)
-
-
     }
+    const handleTagSelected = (index) => {
+        const indexToEdit = Tags.findIndex((tag, key) => key === index);
+        if (indexToEdit !== -1) {
+            const updatedTags = [...Tags];
+            updatedTags[indexToEdit] = { ...updatedTags[indexToEdit], selected: !updatedTags[indexToEdit].selected };
+            setTags(updatedTags);
+            console.log("Tags:", Tags, index, indexToEdit);
+        }
+    }
+    const handleCheckIcon = () => {
+        setSelectedTags(!selectedTags);
+    }
+
+    const TagsData = () => {
+        if (selectedTags) {
+            const selectedTagList = Tags.filter((tag) => tag.selected === true);
+            console.log("TagsData:1", selectedTags, selectedTagList);
+            return selectedTagList;
+        } else {
+            console.log("TagsData:2", Tags);
+            return Tags;
+        }
+    }
+
     const tagActions = [
         <React.Fragment>
             <Button color="secondary" variant="text" onClick={handleTagClose} >Cancel</Button>
@@ -166,7 +227,30 @@ export default function TagPopover() {
     const id = open ? 'simple-popover' : undefined;
 
     return (
-        <div>
+        <div style={{ padding: "1%" }}>
+            <div className={classes.rowContainer}>
+                {useTags.map((item, index) => (
+                    <div key={index} className={classes.useListItem}>
+                        <div
+                            className={classes.useItemLabel}
+                            style={{ background: item.color }}
+                            onClick={() => { handleTagSelected(index) }}
+                        >
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                <div>
+                                    {item.label}
+                                </div>
+                                {item.selected &&
+                                    <IconButton style={{ color: 'white' }}>
+                                        <CloseIcon />
+                                    </IconButton>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                ))}
+            </div>
+
             <IconButton
                 className={classes.button}
                 aria-label="Add"
@@ -196,8 +280,8 @@ export default function TagPopover() {
                             Tags
                         </Typography>
                         <div className={classes.headerIcons}>
-                            <IconButton style={{ color: 'white' }}>
-                                <DoneAllIcon />
+                            <IconButton style={{ color: 'white' }} onClick={handleCheckIcon}>
+                                {selectedTags ? <ListIcon /> : <DoneAllIcon />}
                             </IconButton>
                             <IconButton style={{ color: 'white' }} onClick={handleAdd}>
                                 <AddIcon />
@@ -208,13 +292,23 @@ export default function TagPopover() {
                         </div>
                     </div>
                     <div className={classes.listData}>
-                        {Tags.map((item, index) => (
+                        {TagsData().map((item, index) => (
                             <div key={index} className={classes.listItem}>
                                 <div
                                     className={classes.listItemLabel}
                                     style={{ background: item.color }}
+                                    onClick={() => { handleTagSelected(index) }}
                                 >
-                                    {item.label}
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                        <div>
+                                            {item.label}
+                                        </div>
+                                        {item.selected &&
+                                            <IconButton style={{ color: 'white' }}>
+                                                <CheckIcon />
+                                            </IconButton>
+                                        }
+                                    </div>
                                 </div>
                                 <div className={classes.listItemIcons}>
                                     <IconButton>
@@ -231,7 +325,7 @@ export default function TagPopover() {
                         <Button
                             variant="outlined"
                             color="primary"
-                        // onClick={handleAddButtonClick} // Replace with your actual click handler
+                            onClick={() => { handleUseTag() }} // Replace with your actual click handler
                         >
                             Add
                         </Button>
